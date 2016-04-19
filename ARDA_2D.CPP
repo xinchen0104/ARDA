@@ -1,10 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
+#include "ARDA_CORE.H"
+#include "ARDA_MATH.H"
 #include "ARDA_2D.H"
 
 static uint32_t gColor;
 static SDL_Rect gClipRect;
+// storage for our lookup tables
+extern float cos_look[361]; // 1 extra so we can store 0-360 inclusive
+extern float sin_look[361]; // 1 extra so we can store 0-360 inclusive
+
 ARDA_RESULT ARDA_SetColor(uint32_t c){
     gColor = c;
     return 0;
@@ -69,6 +75,106 @@ ARDA_RESULT ARDA_DrawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint32
 
 //function ARDA_ClipLine
 
+ARDA_RESULT ARDA_HLine(int32_t x1, int32_t x2, int32_t y, uint32_t color, uint32_t* vbuffer, int lpitch)
+{
+    // draw a horizontal line using the memset function
+
+    int32_t temp; // used for temporary storage during endpoint swap
+    uint32_t* start_offset;
+    int min_clip_x = gClipRect.x,
+        min_clip_y = gClipRect.y,
+        max_clip_x = gClipRect.x + gClipRect.w - 1,
+        max_clip_y = gClipRect.y + gClipRect.h - 1;
+
+    // perform trivial rejections
+    if (y > max_clip_y || y < min_clip_y)
+       return(1);
+
+    // sort x1 and x2, so that x2 > x1
+    if (x1>x2)
+       {
+       temp = x1;
+       x1   = x2;
+       x2   = temp;
+       } // end swap
+
+    // perform trivial rejections
+    if (x1 > max_clip_x || x2 < min_clip_x)
+       return(1);
+
+    // now clip
+    x1 = ((x1 < min_clip_x) ? min_clip_x : x1);
+    x2 = ((x2 > max_clip_x) ? max_clip_x : x2);
+
+    start_offset = vbuffer + (y*lpitch) + x1;
+
+    for (int index=0; index<=x2-x1; index++)
+    {
+        // set the pixel
+        *start_offset = color;
+
+        // move downward to next line
+        start_offset ++;
+
+    } // end for index
+    return(0);
+
+} // end HLine
+
+//////////////////////////////////////////////////////////////////////////////
+
+ARDA_RESULT ARDA_VLine(int32_t y1, int32_t y2, int32_t x, uint32_t color, uint32_t* vbuffer, int lpitch)
+{
+    // draw a vertical line, note that a memset function can no longer be
+    // used since the pixel addresses are no longer contiguous in memory
+    // note that the end points of the line must be on the screen
+
+    uint32_t *start_offset; // starting memory offset of line
+    int32_t temp;  // used for temporary storage during swap
+    int min_clip_x = gClipRect.x,
+        min_clip_y = gClipRect.y,
+        max_clip_x = gClipRect.x + gClipRect.w - 1,
+        max_clip_y = gClipRect.y + gClipRect.h - 1;
+
+
+    // perform trivial rejections
+    if (x > max_clip_x || x < min_clip_x)
+       return(1);
+
+    // make sure y2 > y1
+    if (y1>y2)
+       {
+       temp = y1;
+       y1   = y2;
+       y2   = temp;
+       } // end swap
+
+    // perform trivial rejections
+    if (y1 > max_clip_y || y2 < min_clip_y)
+       return(1);
+
+    // now clip
+    y1 = ((y1 < min_clip_y) ? min_clip_y : y1);
+    y2 = ((y2 > max_clip_y) ? max_clip_y : y2);
+
+    // compute starting position
+    start_offset = vbuffer + (y1*lpitch) + x;
+
+    // draw line one pixel at a time
+    for (int index=0; index<=y2-y1; index++)
+        {
+        // set the pixel
+        *start_offset = color;
+
+        // move downward to next line
+        start_offset+=lpitch;
+
+        } // end for index
+    return(0);
+
+} // end VLine
+
+
 ARDA_RESULT ARDA_ClipLine(int32_t &x1,int32_t &y1,int32_t &x2, int32_t &y2, SDL_Rect* clipRect)
 {
     // this function clips the sent line using the globally defined clipping
@@ -128,11 +234,11 @@ ARDA_RESULT ARDA_ClipLine(int32_t &x1,int32_t &y1,int32_t &x2, int32_t &y2, SDL_
 
     // try and trivially reject
     if ((p1_code & p2_code))
-        return(0);
+        return(1);
 
     // test for totally visible, if so leave points untouched
     if (p1_code==0 && p2_code==0)
-        return(1);
+        return(0);
 
     // determine end clip point for p1
     switch(p1_code)
@@ -331,7 +437,7 @@ ARDA_RESULT ARDA_ClipLine(int32_t &x1,int32_t &y1,int32_t &x2, int32_t &y2, SDL_
         (xc2 < min_clip_x) || (xc2 > max_clip_x) ||
         (yc2 < min_clip_y) || (yc2 > max_clip_y) )
         {
-        return(0);
+        return(1);
         } // end if
 
     // store vars back
@@ -340,8 +446,132 @@ ARDA_RESULT ARDA_ClipLine(int32_t &x1,int32_t &y1,int32_t &x2, int32_t &y2, SDL_
     x2 = xc2;
     y2 = yc2;
 
-    return(1);
+    return(0);
 
 } // end Clip_Line
+
+ARDA_RESULT ARDA_DrawClipLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1, SDL_Rect* clipRect, uint32_t color, uint32_t *buffer, uint32_t lpitch){
+    int32_t cxs = x0,
+            cys = y0,
+            cxe = x1,
+            cye = y1;
+    if(ARDA_ClipLine(cxs, cys, cxe, cye, clipRect) != 0){
+        SDL_Log("The line is out of clip rect\n line: (%i, %i) -> (%i, %i)", x0, y0, x1, y1);
+        return(1);
+    }
+    if(ARDA_DrawLine(cxs, cys, cxe, cye, color, buffer, lpitch) != 0){
+        return(1);
+    }
+    return(0);
+
+}
+
+ARDA_RESULT ARDA_DrawPolygon2D(POLYGON2D_PTR poly, uint32_t* buffer, uint32_t lpitch){
+
+    // test if the polygon is visible
+    if (poly->state)
+       {
+       // loop thru and draw a line from vertices 1 to n
+       int index = 0;
+       for (index=0; index < poly->num_verts-1; index++)
+            {
+            // draw line from ith to ith+1 vertex
+            ARDA_DrawClipLine(poly->vlist[index].x+poly->x0,
+                           poly->vlist[index].y+poly->y0,
+                           poly->vlist[index+1].x+poly->x0,
+                           poly->vlist[index+1].y+poly->y0,
+                           NULL,
+                           poly->color,
+                           buffer, lpitch);
+
+            } // end for
+
+           // now close up polygon
+           // draw line from last vertex to 0th
+           ARDA_DrawClipLine(poly->vlist[0].x+poly->x0,
+                          poly->vlist[0].y+poly->y0,
+                          poly->vlist[index].x+poly->x0,
+                          poly->vlist[index].y+poly->y0,
+                          NULL,
+                          poly->color,
+                          buffer, lpitch);
+
+       // return success
+       return(0);
+       } // end if
+    else
+       return(1);
+
+} // end Draw_Polygon2D
+
+
+ARDA_RESULT ARDA_TranslatePolygon2D(POLYGON2D_PTR poly, int32_t dx, int32_t dy){
+    if(!poly){
+        return(1);
+    }
+    poly->x0 += dx;
+    poly->y0 += dy;
+    return(0);
+}
+
+ARDA_RESULT ARDA_RotatePolygon2D(POLYGON2D_PTR poly, int32_t theta)
+{
+// this function rotates the local coordinates of the polygon
+
+// test for valid pointer
+    if (!poly)
+       return(1);
+
+    theta %= 360;
+
+    // test for negative rotation angle
+     if(theta < 0)
+       theta+=360;
+
+    // loop and rotate each point, very crude, no lookup!!!
+    for (int curr_vert = 0; curr_vert < poly->num_verts; curr_vert++)
+        {
+
+        // perform rotation
+        float xr = (float)poly->vlist[curr_vert].x*cos_look[theta] -
+                        (float)poly->vlist[curr_vert].y*sin_look[theta];
+
+        float yr = (float)poly->vlist[curr_vert].x*sin_look[theta] +
+                        (float)poly->vlist[curr_vert].y*cos_look[theta];
+
+        // store result back
+        poly->vlist[curr_vert].x = xr;
+        poly->vlist[curr_vert].y = yr;
+
+        } // end for curr_vert
+
+    // return success
+    return(0);
+
+} // end Rotate_Polygon2D
+
+////////////////////////////////////////////////////////
+
+ARDA_RESULT ARDA_ScalePolygon2D(POLYGON2D_PTR poly, float sx, float sy)
+{
+    // this function scalesthe local coordinates of the polygon
+
+    // test for valid pointer
+    if (!poly)
+       return(1);
+
+    // loop and scale each point
+    for (int curr_vert = 0; curr_vert < poly->num_verts; curr_vert++)
+        {
+        // scale and store result back
+        poly->vlist[curr_vert].x *= sx;
+        poly->vlist[curr_vert].y *= sy;
+
+        } // end for curr_vert
+
+    // return success
+    return(0);
+
+} // end Scale_Polygon2D
 
 

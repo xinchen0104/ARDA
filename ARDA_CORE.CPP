@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 #include "ARDA_CORE.H"
+#include "ARDA_MATH.H"
 
 SDL_Window*             mainWindow = NULL;
 SDL_Renderer*		    mainRenderer = NULL;
@@ -18,13 +19,19 @@ ARDA_RESULT ARDA_Init(void){
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
         flag = ERROR_CUSTOM;
     }
+
+    if (ARDA_MathInit() != 0) {
+        SDL_Log("Unable to initialize math module: %s", SDL_GetError());
+        flag = ERROR_CUSTOM;
+    }
     //CREATE MAIN WINDOW
-    mainWindow = SDL_CreateWindow("SDL Test", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_WIDTH, SDL_WINDOW_FULLSCREEN);
+    mainWindow = SDL_CreateWindow("SDL Test", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, SDL_WINDOW_FULLSCREEN);
     if(mainWindow == NULL){
         SDL_Log("Unable to create the mainWindow: %s", SDL_GetError());
         flag = ERROR_CUSTOM;
     }
     SDL_GetWindowSize(mainWindow, &mainWindowWidth, &mainWindowHeight);
+    //SDL_Log("%i %i", mainWindowWidth, mainWindowHeight);
     //GET PRIMARY SURFACE
     /*Could not be used together with renderer
     primarySurface = SDL_GetWindowSurface(mainWindow);

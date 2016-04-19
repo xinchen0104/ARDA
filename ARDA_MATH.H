@@ -7,8 +7,8 @@
 #define PI         ((float)3.141592654f)
 #define PI2        ((float)6.283185307f)
 #define PI_DIV_2   ((float)1.570796327f)
-#define PI_DIV_4   ((float)0.785398163f) 
-#define PI_INV     ((float)0.318309886f) 
+#define PI_DIV_4   ((float)0.785398163f)
+#define PI_INV     ((float)0.318309886f)
 
 // fixed point mathematics constants
 #define FIXP16_SHIFT     16
@@ -18,8 +18,8 @@
 #define FIXP16_ROUND_UP  0x00008000
 
 // defines for small numbers
-#define EPSILON_E3 (float)(1E-3) 
-#define EPSILON_E4 (float)(1E-4) 
+#define EPSILON_E3 (float)(1E-3)
+#define EPSILON_E4 (float)(1E-4)
 #define EPSILON_E5 (float)(1E-5)
 #define EPSILON_E6 (float)(1E-6)
 
@@ -35,11 +35,6 @@
 
 // random number in a range
 #define RAND_RANGE(x,y) ( (x) + (rand()%((y)-(x)+1)))
-
-// storage for our lookup tables
-extern float cos_look[361]; // 1 extra so we can store 0-360 inclusive
-extern float sin_look[361]; // 1 extra so we can store 0-360 inclusive
-
 
 // vector types ///////////////////////////////////////////
 // 2D vector, point without the w ////////////////////////
@@ -141,7 +136,7 @@ typedef struct MATRIX3X2_TYP
              }; // end explicit names
 
         }; // end union
-
+        }  MATRIX3X2, *MATRIX3X2_PTR;
 // 2x2 matrix /////////////////////////////////////////////
 typedef struct MATRIX2X2_TYP
 {
@@ -261,7 +256,7 @@ typedef struct SPHERICAL3D_TYP
 {
 float p;      // rho, the distance to the point from the origin
 float theta;  // the angle from the z-axis and the line segment o->p
-float phi;    // the angle from the projection if o->p onto the x-y 
+float phi;    // the angle from the projection if o->p onto the x-y
               // plane and the x-axis
 } SPHERICAL3D, *SPHERICAL3D_PTR;
 
@@ -275,7 +270,7 @@ union
     float M[4]; // array indexed storage w,x,y,z order
 
     // vector part, real part format
-    struct 
+    struct
          {
          float    q0;  // the real part
          VECTOR3D qv;  // the imaginary part xi+yj+zk
@@ -283,10 +278,14 @@ union
     struct
          {
          float w,x,y,z;
-         }; 
+         };
     }; // end union
 
 } QUAT, *QUAT_PTR;
+
+ARDA_RESULT ARDA_BuildSinCosTables(void);
+ARDA_RESULT ARDA_MathInit(void);
+
 
 
 
