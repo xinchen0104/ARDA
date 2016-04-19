@@ -575,3 +575,5 @@ ARDA_RESULT ARDA_ScalePolygon2D(POLYGON2D_PTR poly, float sx, float sy)
 } // end Scale_Polygon2D
 
 
+
+

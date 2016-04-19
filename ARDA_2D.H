@@ -39,5 +39,9 @@ ARDA_RESULT ARDA_DrawPolygon2D(POLYGON2D_PTR polygon, uint32_t* buffer, uint32_t
 ARDA_RESULT ARDA_TranslatePolygon2D(POLYGON2D_PTR poly, int32_t dx, int32_t dy);
 ARDA_RESULT ARDA_RotatePolygon2D(POLYGON2D_PTR poly, int32_t theta);
 ARDA_RESULT ARDA_ScalePolygon2D(POLYGON2D_PTR poly, float sx, float sy);
+
+ARDA_RESULT ARDA_FillTopTri(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, uint32_t color, uint32_t* vbuffer, uint32_t lpitch);
+ARDA_RESULT ARDA_FillBottomTri(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, uint32_t color, uint32_t* vbuffer, uint32_t lpitch);
+ARDA_RESULT ARDA_FillTriangle2D(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, uint32_t color, uint32_t* vbuffer, uint32_t lpitch);
 #else
 #endif
