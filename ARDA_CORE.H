@@ -23,6 +23,19 @@ typedef int32_t ARDA_RESULT;
 
 ARDA_RESULT ARDA_Init(void);
 ARDA_RESULT ARDA_Shutdown(void);
+inline void MemSetDWord(void* dest, uint32_t data, uint32_t count);
+
+inline void MemSetDWord(void* dest, uint32_t data, uint32_t count){
+        asm(
+                "movq %0, %%rdi\n\t"
+                "movl %2, %%ecx\n\t"
+                "movl %1, %%eax\n\t"
+                "rep\n\t"
+                "stosl"
+                ::"m"(dest),"ir"(data),"ir"(count):"rdi","ecx","eax"
+        );
+}
+
 #else
 
 #endif

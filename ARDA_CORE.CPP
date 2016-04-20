@@ -42,6 +42,7 @@ ARDA_RESULT ARDA_Init(void){
     */
     //CREATE MAIN RENDERER
     mainRenderer = SDL_CreateRenderer(mainWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    //mainRenderer = SDL_CreateRenderer(mainWindow, -1, SDL_RENDERER_ACCELERATED);
     if(mainRenderer == NULL){
 	SDL_Log("Unable to Create the main renderer: %s", SDL_GetError());
         flag = ERROR_CUSTOM;

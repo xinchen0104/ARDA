@@ -108,7 +108,7 @@ ARDA_RESULT ARDA_HLine(int32_t x1, int32_t x2, int32_t y, uint32_t color, uint32
 
     start_offset = vbuffer + (y*lpitch) + x1;
 
-    for (int index=0; index<=x2-x1; index++)
+    /*for (int index=0; index<=x2-x1; index++)
     {
         // set the pixel
         *start_offset = color;
@@ -116,7 +116,8 @@ ARDA_RESULT ARDA_HLine(int32_t x1, int32_t x2, int32_t y, uint32_t color, uint32
         // move downward to next line
         start_offset ++;
 
-    } // end for index
+    }*/ // end for index
+    MemSetDWord((void*)start_offset, color, x2 - x1 + 1);
     return(0);
 
 } // end HLine
@@ -472,7 +473,7 @@ ARDA_RESULT ARDA_DrawPolygon2D(POLYGON2D_PTR poly, uint32_t* buffer, uint32_t lp
     if (poly->state)
        {
        // loop thru and draw a line from vertices 1 to n
-       int index = 0;
+       uint32_t index = 0;
        for (index=0; index < poly->num_verts-1; index++)
             {
             // draw line from ith to ith+1 vertex
@@ -529,7 +530,7 @@ ARDA_RESULT ARDA_RotatePolygon2D(POLYGON2D_PTR poly, int32_t theta)
        theta+=360;
 
     // loop and rotate each point, very crude, no lookup!!!
-    for (int curr_vert = 0; curr_vert < poly->num_verts; curr_vert++)
+    for (uint32_t curr_vert = 0; curr_vert < poly->num_verts; curr_vert++)
         {
 
         // perform rotation
@@ -561,7 +562,7 @@ ARDA_RESULT ARDA_ScalePolygon2D(POLYGON2D_PTR poly, float sx, float sy)
        return(1);
 
     // loop and scale each point
-    for (int curr_vert = 0; curr_vert < poly->num_verts; curr_vert++)
+    for (uint32_t curr_vert = 0; curr_vert < poly->num_verts; curr_vert++)
         {
         // scale and store result back
         poly->vlist[curr_vert].x *= sx;
@@ -574,6 +575,335 @@ ARDA_RESULT ARDA_ScalePolygon2D(POLYGON2D_PTR poly, float sx, float sy)
 
 } // end Scale_Polygon2D
 
+ARDA_RESULT ARDA_FilledTopTri(int32_t x1,int32_t y1,
+                  int32_t x2,int32_t y2,
+                  int32_t x3,int32_t y3,
+                  uint32_t color,
+                  uint32_t *vbuffer, uint32_t lpitch)
+{
+// this function draws a triangle that has a flat top
 
+    float dx_right,    // the dx/dy ratio of the right edge of line
+          dx_left,     // the dx/dy ratio of the left edge of line
+          xs,xe,       // the starting and ending points of the edges
+          height;      // the height of the triangle
+
+    int temp_x,        // used during sorting as temps
+        temp_y,
+        right,         // used by clipping
+        left;
+
+    // destination address of next scanline
+    uint32_t* dest_addr = NULL;
+
+    int min_clip_x = gClipRect.x,
+        min_clip_y = gClipRect.y,
+        max_clip_x = gClipRect.x + gClipRect.w - 1,
+        max_clip_y = gClipRect.y + gClipRect.h - 1;
+
+    // test order of x1 and x2
+    if (x2 < x1)
+       {
+       temp_x = x2;
+       x2     = x1;
+       x1     = temp_x;
+       } // end if swap
+
+    // compute delta's
+    height = y3-y1;
+
+    dx_left  = (x3-x1)/height;
+    dx_right = (x3-x2)/height;
+
+    // set starting points
+    xs = (float)x1;
+    xe = (float)x2+(float)0.5;
+
+    // perform y clipping
+    if (y1 < min_clip_y)
+       {
+       // compute new xs and ys
+       xs = xs+dx_left*(float)(-y1+min_clip_y);
+       xe = xe+dx_right*(float)(-y1+min_clip_y);
+
+       // reset y1
+       y1=min_clip_y;
+
+       } // end if top is off screen
+
+    if (y3>max_clip_y)
+       y3=max_clip_y;
+
+    // compute starting address in video memory
+    dest_addr = vbuffer+y1*lpitch;
+
+    // test if x clipping is needed
+    if (x1>=min_clip_x && x1<=max_clip_x &&
+        x2>=min_clip_x && x2<=max_clip_x &&
+        x3>=min_clip_x && x3<=max_clip_x)
+        {
+        // draw the triangle
+        for (temp_y=y1; temp_y<=y3; temp_y++,dest_addr+=lpitch)
+            {
+            MemSetDWord((void*)(dest_addr + (uint32_t)xs) , color, (uint32_t)((int)xe-(int)xs+1));
+            // adjust starting point and ending point
+            xs+=dx_left;
+            xe+=dx_right;
+
+            } // end for
+
+        } // end if no x clipping needed
+    else
+       {
+       // clip x axis with slower version
+
+       // draw the triangle
+       for (temp_y=y1; temp_y<=y3; temp_y++,dest_addr+=lpitch)
+           {
+           // do x clip
+           left  = (int)xs;
+           right = (int)xe;
+
+           // clip line
+           if (left < min_clip_x)
+              {
+              left = min_clip_x;
+
+              if (right < min_clip_x)
+                 continue;
+              }
+
+           if (right > max_clip_x)
+              {
+              right = max_clip_x;
+
+              if (left > max_clip_x)
+                 continue;
+              }
+            MemSetDWord((void*)(dest_addr + (uint32_t)left), color, (unsigned int)(right-left+1));
+            // adjust starting point and ending point
+            xs+=dx_left;
+            xe+=dx_right;
+
+
+           } // end for
+
+       } // end else x clipping needed
+       return(0);
+
+} // end Draw_Top_Tri
+
+/////////////////////////////////////////////////////////////////////////////
+ARDA_RESULT ARDA_FilledBottomTri(int32_t x1,int32_t y1,
+                  int32_t x2,int32_t y2,
+                  int32_t x3,int32_t y3,
+                  uint32_t color,
+                  uint32_t *vbuffer, uint32_t lpitch)
+{
+// this function draws a triangle that has a flat bottom
+
+    float dx_right,    // the dx/dy ratio of the right edge of line
+          dx_left,     // the dx/dy ratio of the left edge of line
+          xs,xe,       // the starting and ending points of the edges
+          height;      // the height of the triangle
+
+    int temp_x,        // used during sorting as temps
+        temp_y,
+        right,         // used by clipping
+        left;
+
+
+    int min_clip_x = gClipRect.x,
+        min_clip_y = gClipRect.y,
+        max_clip_x = gClipRect.x + gClipRect.w - 1,
+        max_clip_y = gClipRect.y + gClipRect.h - 1;
+
+    // destination address of next scanline
+    uint32_t* dest_addr;
+
+    // test order of x1 and x2
+    if (x3 < x2)
+       {
+       temp_x = x2;
+       x2     = x3;
+       x3     = temp_x;
+       } // end if swap
+
+    // compute delta's
+    height = y3-y1;
+
+    dx_left  = (x2-x1)/height;
+    dx_right = (x3-x1)/height;
+
+    // set starting points
+    xs = (float)x1;
+    xe = (float)x1; // +(float)0.5;
+
+    // perform y clipping
+    if (y1<min_clip_y)
+       {
+       // compute new xs and ys
+       xs = xs+dx_left*(float)(-y1+min_clip_y);
+       xe = xe+dx_right*(float)(-y1+min_clip_y);
+
+       // reset y1
+       y1=min_clip_y;
+
+       } // end if top is off screen
+
+    if (y3>max_clip_y)
+       y3=max_clip_y;
+
+    // compute starting address in video memory
+    dest_addr = vbuffer+y1*lpitch;
+
+    // test if x clipping is needed
+    if (x1>=min_clip_x && x1<=max_clip_x &&
+        x2>=min_clip_x && x2<=max_clip_x &&
+        x3>=min_clip_x && x3<=max_clip_x)
+        {
+        // draw the triangle
+        for (temp_y=y1; temp_y<=y3; temp_y++,dest_addr+=lpitch)
+            {
+            MemSetDWord((void*)(dest_addr+(uint32_t)xs), color,(uint32_t)((int)xe-(int)xs+1));
+
+            // adjust starting point and ending point
+            xs+=dx_left;
+            xe+=dx_right;
+
+            } // end for
+
+        } // end if no x clipping needed
+    else
+       {
+       // clip x axis with slower version
+
+       // draw the triangle
+
+       for (temp_y=y1; temp_y<=y3; temp_y++,dest_addr+=lpitch)
+           {
+           // do x clip
+           left  = (int)xs;
+           right = (int)xe;
+
+           // adjust starting point and ending point
+           xs+=dx_left;
+           xe+=dx_right;
+
+           // clip line
+           if (left < min_clip_x)
+              {
+              left = min_clip_x;
+
+              if (right < min_clip_x)
+                 continue;
+              }
+
+           if (right > max_clip_x)
+              {
+              right = max_clip_x;
+
+              if (left > max_clip_x)
+                 continue;
+              }
+
+           MemSetDWord((void*)(dest_addr+(uint32_t)left), color, (uint32_t)(right-left+1));
+
+           } // end for
+
+       } // end else x clipping needed
+       return(0);
+
+} // end Draw_Bottom_Tri
+ARDA_RESULT ARDA_FilledTriangle2D(int32_t x1, int32_t y1,
+                      int32_t x2, int32_t y2,
+                      int32_t x3, int32_t y3,
+                      uint32_t color,
+					  uint32_t* vbuffer, uint32_t lpitch)
+{
+    // this function draws a triangle on the destination buffer
+    // it decomposes all triangles into a pair of flat top, flat bottom
+
+    int temp_x, // used for sorting
+        temp_y,
+        new_x;
+
+    int min_clip_x = gClipRect.x,
+        min_clip_y = gClipRect.y,
+        max_clip_x = gClipRect.x + gClipRect.w - 1,
+        max_clip_y = gClipRect.y + gClipRect.h - 1;
+
+    #ifdef DEBUG_ON
+        // track rendering stats
+        debug_polys_rendered_per_frame++;
+    #endif
+
+
+    // test for h lines and v lines
+    if ((x1==x2 && x2==x3)  ||  (y1==y2 && y2==y3))
+       return(1);
+
+    // sort p1,p2,p3 in ascending y order
+    if (y2<y1)
+       {
+       temp_x = x2;
+       temp_y = y2;
+       x2     = x1;
+       y2     = y1;
+       x1     = temp_x;
+       y1     = temp_y;
+       } // end if
+
+    // now we know that p1 and p2 are in order
+    if (y3<y1)
+       {
+       temp_x = x3;
+       temp_y = y3;
+       x3     = x1;
+       y3     = y1;
+       x1     = temp_x;
+       y1     = temp_y;
+       } // end if
+
+    // finally test y3 against y2
+    if (y3<y2)
+       {
+       temp_x = x3;
+       temp_y = y3;
+       x3     = x2;
+       y3     = y2;
+       x2     = temp_x;
+       y2     = temp_y;
+
+       } // end if
+
+    // do trivial rejection tests for clipping
+    if ( y3<min_clip_y || y1>max_clip_y ||
+        (x1<min_clip_x && x2<min_clip_x && x3<min_clip_x) ||
+        (x1>max_clip_x && x2>max_clip_x && x3>max_clip_x) )
+       return(1);
+
+    // test if top of triangle is flat
+    if (y1==y2)
+       {
+       ARDA_FilledTopTri(x1,y1,x2,y2,x3,y3,color,vbuffer,lpitch);
+       } // end if
+    else
+    if (y2==y3)
+       {
+       ARDA_FilledBottomTri(x1,y1,x2,y2,x3,y3,color,vbuffer,lpitch);
+       } // end if bottom is flat
+    else
+       {
+       // general triangle that's needs to be broken up along long edge
+       new_x = x1 + (int)(0.5+(float)(y2-y1)*(float)(x3-x1)/(float)(y3-y1));
+
+       // draw each sub-triangle
+       ARDA_FilledBottomTri(x1,y1,new_x,y2,x2,y2,color,vbuffer,lpitch);
+       ARDA_FilledTopTri(x2,y2,new_x,y2,x3,y3,color,vbuffer,lpitch);
+
+       } // end else
+
+} // end Draw_Triangle_2D
 
 
