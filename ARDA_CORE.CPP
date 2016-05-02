@@ -61,4 +61,5 @@ ARDA_RESULT ARDA_Shutdown(){
     SDL_DestroyRenderer(mainRenderer);
     SDL_DestroyWindow(mainWindow);
     SDL_Quit();
+    return(0);
 }

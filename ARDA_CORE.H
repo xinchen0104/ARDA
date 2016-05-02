@@ -10,10 +10,9 @@
 #define SCREEN_WINDOWED         1
 
 #define _RGB32(a,r,g,b)         (uint32_t)((b) + ((g) << 8) + ((r) << 16) + ((a) << 24))
-#define MIN(a, b)               (((a) < (b)) ? (a) : (b))
-#define MAX(a, b)               (((a) > (b)) ? (a) : (b))
 
-#define ERROR_LOG(msg)          fprintf(stderr,"\n msg:  %s\n",SDL_GetError())
+#define SET_BIT(word,bit_flag)   ((word)=((word) | (bit_flag)))
+#define RESET_BIT(word,bit_flag) ((word)=((word) & (~bit_flag)))
 
 #define ERROR_CUSTOM            1001
 

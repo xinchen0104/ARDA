@@ -903,6 +903,7 @@ ARDA_RESULT ARDA_FilledTriangle2D(int32_t x1, int32_t y1,
        ARDA_FilledTopTri(x2,y2,new_x,y2,x3,y3,color,vbuffer,lpitch);
 
        } // end else
+    return(0);
 
 } // end Draw_Triangle_2D
 
