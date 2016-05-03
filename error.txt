@@ -1,0 +1,6 @@
+1 ARDA_CORE.CPP ARDA_ClipLine                                                Forced type conversion
+
+2 ARDA_3DV1.CPP ARDA_Init_CAM4DV1                                            cam->view_dist = (0.5)*(cam->viewplane_width)*tan_fov_div2 >> cam->view_dist = (0.5)*(cam->viewplane_width)/tan_fov_div2
+                ARDA_BuildCameraToPerspective_MATRIX4X4                      cam->view_dist*cam->aspect_ratio >> cam->view_dist/cam->aspect_ratio
+                ARDA_CameraToPerspective_OBJECT4DV1 &                        obj->vlist_trans[vertex].y = cam->view_dist*obj->vlist_trans[vertex].y*cam->aspect_ratio/z >>
+                ARDA_CameraToPerspective_RENDERLIST4DV1                      obj->vlist_trans[vertex].y = cam->view_dist*obj->vlist_trans[vertex].y/cam->aspect_ratio/z;
