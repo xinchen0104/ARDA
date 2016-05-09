@@ -48,7 +48,8 @@ ARDA_RESULT ARDA_Init(void){
         flag = ERROR_CUSTOM;
     }
     //CREATE DEFAULT TEXTURE
-    defaultTexture = SDL_CreateTexture(mainRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, mainWindowWidth, mainWindowHeight);
+    //defaultTexture = SDL_CreateTexture(mainRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, mainWindowWidth, mainWindowHeight);
+    defaultTexture = SDL_CreateTexture(mainRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, mainWindowWidth, mainWindowHeight);
     if(defaultTexture == NULL){
 	SDL_Log("Unable to Create the default texture: %s", SDL_GetError());
         flag = ERROR_CUSTOM;

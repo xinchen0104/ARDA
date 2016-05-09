@@ -63,7 +63,7 @@ ARDA_RESULT GameInit(void){
     ARDA_Reset_RENDERLIST4DV1(&rend_list);
     poly1.state  = POLY4DV1_STATE_ACTIVE;
     poly1.attr   =  0;
-    poly1.color  = _RGB32(0,255,0,0);
+    poly1.color  = _RGBA32(0,100,0,255);
 
     poly1.vlist[0].x = 0;
     poly1.vlist[0].y = 50;
@@ -121,11 +121,11 @@ void RenderMain(){
 
     ARDA_ModelToWorld_RENDERLIST4DV1(&rend_list, &poly1_pos);
 
-    ARDA_RemoveBackfaces_RENDERLIST4DV1(&rend_list, &cam);
+ //   ARDA_RemoveBackfaces_RENDERLIST4DV1(&rend_list, &cam);
 
-//    ARDA_BuildMatrixEuler_CAM4DV1(&cam, CAM_ROT_SEQ_ZYX);
+    ARDA_BuildMatrixEuler_CAM4DV1(&cam, CAM_ROT_SEQ_ZYX);
 
-    ARDA_BuildMatrixUVN_CAM4DV1(&cam, CAM_ROT_SEQ_ZYX);
+//    ARDA_BuildMatrixUVN_CAM4DV1(&cam, CAM_ROT_SEQ_ZYX);
 
     ARDA_WorldToCamera_RENDERLIST4DV1(&rend_list, &cam);
 

@@ -1,5 +1,4 @@
 // INCLUDES ///////////////////////////////////////////////////
-#define DEBUG_ON
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -444,7 +443,7 @@ ARDA_RESULT ARDA_PerspectiveToScreen_OBJECT4DV1(OBJECT4DV1_PTR obj, CAM4DV1_PTR 
 
 ////////////////////////////////////////////////////////////
 
-ARDA_RESULT ARDA_Cull_OBJECT4DV1(OBJECT4DV1_PTR obj,  // object to cull
+int ARDA_Cull_OBJECT4DV1(OBJECT4DV1_PTR obj,  // object to cull
                     CAM4DV1_PTR cam,     // camera to cull relative to
                      int cull_flags)     // clipping planes to consider
 {
@@ -476,7 +475,7 @@ ARDA_RESULT ARDA_Cull_OBJECT4DV1(OBJECT4DV1_PTR obj,  // object to cull
          ((sphere_pos.z + obj->max_radius) < cam->near_clip_z) )
        {
        SET_BIT(obj->state, OBJECT4DV1_STATE_CULLED);
-       return 0;
+       return 1;
        } // end if
 
     } // end if
@@ -497,7 +496,7 @@ ARDA_RESULT ARDA_Cull_OBJECT4DV1(OBJECT4DV1_PTR obj,  // object to cull
          ((sphere_pos.x+obj->max_radius) < -z_test) )  // left side, note sign change
        {
        SET_BIT(obj->state, OBJECT4DV1_STATE_CULLED);
-       return 0;
+       return 1;
        } // end if
     } // end if
 
@@ -517,13 +516,13 @@ ARDA_RESULT ARDA_Cull_OBJECT4DV1(OBJECT4DV1_PTR obj,  // object to cull
          ((sphere_pos.y+obj->max_radius) < -z_test) )  // bottom side, note sign change
        {
        SET_BIT(obj->state, OBJECT4DV1_STATE_CULLED);
-       return 0;
+       return 1;
        } // end if
 
     } // end if
 
     // return failure to cull
-    return 1;
+    return 0;
 
 } // end Cull_OBJECT4DV1
 
@@ -1087,7 +1086,7 @@ ARDA_RESULT ARDA_InsertPOLY4DV1_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list,
 
     // step 0: are we full?
     if (rend_list->num_polys >= RENDERLIST4DV1_MAX_POLYS)
-       return 1;
+       return -1;
 
     // step 1: copy polygon into next opening in polygon render list
 
@@ -1098,6 +1097,7 @@ ARDA_RESULT ARDA_InsertPOLY4DV1_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list,
     rend_list->poly_data[rend_list->num_polys].state = poly->state;
     rend_list->poly_data[rend_list->num_polys].attr  = poly->attr;
     rend_list->poly_data[rend_list->num_polys].color = poly->color;
+    rend_list->poly_data[rend_list->num_polys].lit_color = poly->lit_color;
 
     // now copy vertices, be careful! later put a loop, but for now
     // know there are 3 vertices always!
@@ -1159,7 +1159,7 @@ ARDA_RESULT ARDA_InsertPOLYF4DV1_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list,
 
     // step 0: are we full?
     if (rend_list->num_polys >= RENDERLIST4DV1_MAX_POLYS)
-       return 1;
+       return -1;
 
     // step 1: copy polygon into next opening in polygon render list
 
@@ -1216,7 +1216,7 @@ ARDA_RESULT ARDA_InsertOBJECT4DV1_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list,
     if (!(obj->state & OBJECT4DV1_STATE_ACTIVE) ||
          (obj->state & OBJECT4DV1_STATE_CULLED) ||
          !(obj->state & OBJECT4DV1_STATE_VISIBLE))
-       return 1;
+       return -1;
 
     // the object is valid, let's rip it apart polygon by polygon
     for (int poly = 0; poly < obj->num_polys; poly++)
@@ -1247,7 +1247,7 @@ ARDA_RESULT ARDA_InsertOBJECT4DV1_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list,
            curr_poly->vlist = vlist_old;
 
            // the whole object didn't fit!
-           return 1;
+           return -1;
            } // end if
 
         // fix vertex list pointer

@@ -88,7 +88,7 @@ ARDA_RESULT ARDA_HLine(int32_t x1, int32_t x2, int32_t y, uint32_t color, uint32
 
     // perform trivial rejections
     if (y > max_clip_y || y < min_clip_y)
-       return(1);
+       return -1;
 
     // sort x1 and x2, so that x2 > x1
     if (x1>x2)
@@ -100,7 +100,7 @@ ARDA_RESULT ARDA_HLine(int32_t x1, int32_t x2, int32_t y, uint32_t color, uint32
 
     // perform trivial rejections
     if (x1 > max_clip_x || x2 < min_clip_x)
-       return(1);
+       return -1;
 
     // now clip
     x1 = ((x1 < min_clip_x) ? min_clip_x : x1);
@@ -118,7 +118,7 @@ ARDA_RESULT ARDA_HLine(int32_t x1, int32_t x2, int32_t y, uint32_t color, uint32
 
     }*/ // end for index
     MemSetDWord((void*)start_offset, color, x2 - x1 + 1);
-    return(0);
+    return 0;
 
 } // end HLine
 
@@ -140,7 +140,7 @@ ARDA_RESULT ARDA_VLine(int32_t y1, int32_t y2, int32_t x, uint32_t color, uint32
 
     // perform trivial rejections
     if (x > max_clip_x || x < min_clip_x)
-       return(1);
+       return -1;
 
     // make sure y2 > y1
     if (y1>y2)
@@ -152,7 +152,7 @@ ARDA_RESULT ARDA_VLine(int32_t y1, int32_t y2, int32_t x, uint32_t color, uint32
 
     // perform trivial rejections
     if (y1 > max_clip_y || y2 < min_clip_y)
-       return(1);
+       return -1;
 
     // now clip
     y1 = ((y1 < min_clip_y) ? min_clip_y : y1);
@@ -171,7 +171,7 @@ ARDA_RESULT ARDA_VLine(int32_t y1, int32_t y2, int32_t x, uint32_t color, uint32
         start_offset+=lpitch;
 
         } // end for index
-    return(0);
+    return 0;
 
 } // end VLine
 
@@ -235,11 +235,11 @@ ARDA_RESULT ARDA_ClipLine(int32_t &x1,int32_t &y1,int32_t &x2, int32_t &y2, SDL_
 
     // try and trivially reject
     if ((p1_code & p2_code))
-        return(1);
+        return -1;
 
     // test for totally visible, if so leave points untouched
     if (p1_code==0 && p2_code==0)
-        return(0);
+        return 0;
 
     // determine end clip point for p1
     switch(p1_code)
@@ -438,7 +438,7 @@ ARDA_RESULT ARDA_ClipLine(int32_t &x1,int32_t &y1,int32_t &x2, int32_t &y2, SDL_
         (xc2 < min_clip_x) || (xc2 > max_clip_x) ||
         (yc2 < min_clip_y) || (yc2 > max_clip_y) )
         {
-        return(1);
+        return -1;
         } // end if
 
     // store vars back
@@ -447,7 +447,7 @@ ARDA_RESULT ARDA_ClipLine(int32_t &x1,int32_t &y1,int32_t &x2, int32_t &y2, SDL_
     x2 = xc2;
     y2 = yc2;
 
-    return(0);
+    return 0;
 
 } // end Clip_Line
 
@@ -458,12 +458,12 @@ ARDA_RESULT ARDA_DrawClipLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1, SD
             cye = y1;
     if(ARDA_ClipLine(cxs, cys, cxe, cye, clipRect) != 0){
         SDL_Log("The line is out of clip rect\n line: (%i, %i) -> (%i, %i)", x0, y0, x1, y1);
-        return(1);
+        return -1;
     }
     if(ARDA_DrawLine(cxs, cys, cxe, cye, color, buffer, lpitch) != 0){
-        return(1);
+        return -1;
     }
-    return(0);
+    return 0;
 
 }
 
@@ -498,21 +498,21 @@ ARDA_RESULT ARDA_DrawPolygon2D(POLYGON2D_PTR poly, uint32_t* buffer, uint32_t lp
                           buffer, lpitch);
 
        // return success
-       return(0);
+       return 0;
        } // end if
     else
-       return(1);
+       return -1;
 
 } // end Draw_Polygon2D
 
 
 ARDA_RESULT ARDA_TranslatePolygon2D(POLYGON2D_PTR poly, int32_t dx, int32_t dy){
     if(!poly){
-        return(1);
+        return -1;
     }
     poly->x0 += dx;
     poly->y0 += dy;
-    return(0);
+    return 0;
 }
 
 ARDA_RESULT ARDA_RotatePolygon2D(POLYGON2D_PTR poly, int32_t theta)
@@ -521,7 +521,7 @@ ARDA_RESULT ARDA_RotatePolygon2D(POLYGON2D_PTR poly, int32_t theta)
 
 // test for valid pointer
     if (!poly)
-       return(1);
+       return -1;
 
     theta %= 360;
 
@@ -547,7 +547,7 @@ ARDA_RESULT ARDA_RotatePolygon2D(POLYGON2D_PTR poly, int32_t theta)
         } // end for curr_vert
 
     // return success
-    return(0);
+    return 0;
 
 } // end Rotate_Polygon2D
 
@@ -559,7 +559,7 @@ ARDA_RESULT ARDA_ScalePolygon2D(POLYGON2D_PTR poly, float sx, float sy)
 
     // test for valid pointer
     if (!poly)
-       return(1);
+       return -1;
 
     // loop and scale each point
     for (uint32_t curr_vert = 0; curr_vert < poly->num_verts; curr_vert++)
@@ -571,7 +571,7 @@ ARDA_RESULT ARDA_ScalePolygon2D(POLYGON2D_PTR poly, float sx, float sy)
         } // end for curr_vert
 
     // return success
-    return(0);
+    return 0;
 
 } // end Scale_Polygon2D
 
@@ -689,7 +689,7 @@ ARDA_RESULT ARDA_FilledTopTri(int32_t x1,int32_t y1,
            } // end for
 
        } // end else x clipping needed
-       return(0);
+       return 0;
 
 } // end Draw_Top_Tri
 
@@ -812,7 +812,7 @@ ARDA_RESULT ARDA_FilledBottomTri(int32_t x1,int32_t y1,
            } // end for
 
        } // end else x clipping needed
-       return(0);
+       return 0;
 
 } // end Draw_Bottom_Tri
 ARDA_RESULT ARDA_FilledTriangle2D(int32_t x1, int32_t y1,
@@ -841,7 +841,7 @@ ARDA_RESULT ARDA_FilledTriangle2D(int32_t x1, int32_t y1,
 
     // test for h lines and v lines
     if ((x1==x2 && x2==x3)  ||  (y1==y2 && y2==y3))
-       return(1);
+       return -1;
 
     // sort p1,p2,p3 in ascending y order
     if (y2<y1)
@@ -881,7 +881,7 @@ ARDA_RESULT ARDA_FilledTriangle2D(int32_t x1, int32_t y1,
     if ( y3<min_clip_y || y1>max_clip_y ||
         (x1<min_clip_x && x2<min_clip_x && x3<min_clip_x) ||
         (x1>max_clip_x && x2>max_clip_x && x3>max_clip_x) )
-       return(1);
+       return -1;
 
     // test if top of triangle is flat
     if (y1==y2)
@@ -903,7 +903,7 @@ ARDA_RESULT ARDA_FilledTriangle2D(int32_t x1, int32_t y1,
        ARDA_FilledTopTri(x2,y2,new_x,y2,x3,y3,color,vbuffer,lpitch);
 
        } // end else
-    return(0);
+    return 0;
 
 } // end Draw_Triangle_2D
 

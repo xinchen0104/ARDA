@@ -9,7 +9,8 @@
 #define SCREEN_FULLSCREEN       0
 #define SCREEN_WINDOWED         1
 
-#define _RGB32(a,r,g,b)         (uint32_t)((b) + ((g) << 8) + ((r) << 16) + ((a) << 24))
+#define _ARGB32(a,r,g,b)         (uint32_t)((b) + ((g) << 8) + ((r) << 16) + ((a) << 24))
+#define _RGBA32(r,g,b,a)         (uint32_t)((a) + ((b) << 8) + ((g) << 16) + ((r) << 24))
 
 #define SET_BIT(word,bit_flag)   ((word)=((word) | (bit_flag)))
 #define RESET_BIT(word,bit_flag) ((word)=((word) & (~bit_flag)))
@@ -18,7 +19,10 @@
 
 #define SWAP(a,b,t)             {t=a; a=b; b=t;}
 
+#define SIGN(x) ((x) > 0 ? (1) : (-1))
+
 typedef int32_t ARDA_RESULT;
+//typedef unsigned char UCHAR;
 
 ARDA_RESULT ARDA_Init(void);
 ARDA_RESULT ARDA_Shutdown(void);
