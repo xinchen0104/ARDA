@@ -165,15 +165,11 @@ ARDA_RESULT ARDA_ResetLights_LIGHTV1(void);
 ARDA_RESULT ARDA_ResetMaterials_MATERIALV1(void);
 
 
-ARDA_RESULT ARDA_DrawSolid_OBJECT4DV1(OBJECT4DV1_PTR obj, uint32_t *video_buffer, int lpitch);
+ARDA_RESULT ARDA_DrawSolid_OBJECT4DV1(OBJECT4DV1_PTR obj, uint32_t *video_buffer, int lpitch, int light_on=0);
 
-ARDA_RESULT ARDA_DrawSolid_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, uint32_t *video_buffer, int lpitch);
+ARDA_RESULT ARDA_DrawSolid_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, uint32_t *video_buffer, int lpitch, int light_on=0);
 
-// inserts an object into renderlist with shaded color override
-ARDA_RESULT ARDA_InsertOBJECT4DV1_RENDERLIST4DV1_V2(RENDERLIST4DV1_PTR rend_list,
-                                      OBJECT4DV1_PTR obj,
-                                      int insert_local=0,
-                                      int lighting_on=0);
+
 // light an object
 
 

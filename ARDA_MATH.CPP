@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
 #include <SDL2/SDL.h>
 #include "ARDA_CORE.H"
 #include "ARDA_MATH.H"

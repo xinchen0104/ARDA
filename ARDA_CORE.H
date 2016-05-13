@@ -28,6 +28,10 @@ ARDA_RESULT ARDA_Init(void);
 ARDA_RESULT ARDA_Shutdown(void);
 inline void MemSetDWord(void* dest, uint32_t data, uint32_t count);
 
+uint32_t Get_Clock(void);
+uint32_t Start_Clock(void);
+uint32_t Wait_Clock(uint32_t count);
+
 inline void MemSetDWord(void* dest, uint32_t data, uint32_t count){
         asm(
                 "movq %0, %%rdi\n\t"

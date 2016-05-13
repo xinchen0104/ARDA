@@ -1,7 +1,4 @@
 // INCLUDES ///////////////////////////////////////////////////
-
-#include <stdio.h>
-#include <stdlib.h>
 #include <SDL2/SDL.h>
 #include "ARDA_CORE.H"
 #include "ARDA_MATH.H"
@@ -130,7 +127,7 @@ int ARDA_InitLight_LIGHTV1(int           index,      // index of light to create
 
 
 ARDA_RESULT ARDA_DrawSolid_OBJECT4DV1(OBJECT4DV1_PTR obj,
-                          uint32_t *video_buffer, int lpitch)
+                          uint32_t *video_buffer, int lpitch, int light_on)
 
 {
     for (int poly=0; poly < obj->num_polys; poly++)
@@ -151,10 +148,16 @@ ARDA_RESULT ARDA_DrawSolid_OBJECT4DV1(OBJECT4DV1_PTR obj,
         int vindex_2 = obj->plist[poly].vert[2];
 
         // draw the triangle
+        if(light_on)
         ARDA_FilledTriangle2D(obj->vlist_trans[ vindex_0 ].x, obj->vlist_trans[ vindex_0 ].y,
                          obj->vlist_trans[ vindex_1 ].x, obj->vlist_trans[ vindex_1 ].y,
                          obj->vlist_trans[ vindex_2 ].x, obj->vlist_trans[ vindex_2 ].y,
                          obj->plist[poly].lit_color, video_buffer, lpitch);
+        else
+        ARDA_FilledTriangle2D(obj->vlist_trans[ vindex_0 ].x, obj->vlist_trans[ vindex_0 ].y,
+                         obj->vlist_trans[ vindex_1 ].x, obj->vlist_trans[ vindex_1 ].y,
+                         obj->vlist_trans[ vindex_2 ].x, obj->vlist_trans[ vindex_2 ].y,
+                         obj->plist[poly].color, video_buffer, lpitch);
 
         } // end for poly
     return 0;
@@ -163,8 +166,8 @@ ARDA_RESULT ARDA_DrawSolid_OBJECT4DV1(OBJECT4DV1_PTR obj,
 
 ///////////////////////////////////////////////////////////////
 
-ARDA_RESULT DrawSolid_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list,
-                              uint32_t *video_buffer, int lpitch)
+ARDA_RESULT ARDA_DrawSolid_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list,
+                              uint32_t *video_buffer, int lpitch, int light_on)
 {
 
     for (int poly=0; poly < rend_list->num_polys; poly++)
@@ -178,10 +181,17 @@ ARDA_RESULT DrawSolid_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list,
            continue; // move onto next poly
 
         // draw the triangle
+        if(light_on)
         ARDA_FilledTriangle2D(rend_list->poly_ptrs[poly]->tvlist[0].x, rend_list->poly_ptrs[poly]->tvlist[0].y,
                          rend_list->poly_ptrs[poly]->tvlist[1].x, rend_list->poly_ptrs[poly]->tvlist[1].y,
                          rend_list->poly_ptrs[poly]->tvlist[2].x, rend_list->poly_ptrs[poly]->tvlist[2].y,
                          rend_list->poly_ptrs[poly]->lit_color, video_buffer, lpitch);
+        else
+        ARDA_FilledTriangle2D(rend_list->poly_ptrs[poly]->tvlist[0].x, rend_list->poly_ptrs[poly]->tvlist[0].y,
+                         rend_list->poly_ptrs[poly]->tvlist[1].x, rend_list->poly_ptrs[poly]->tvlist[1].y,
+                         rend_list->poly_ptrs[poly]->tvlist[2].x, rend_list->poly_ptrs[poly]->tvlist[2].y,
+                         rend_list->poly_ptrs[poly]->color, video_buffer, lpitch);
+
 
         } // end for poly
     return 0;
@@ -190,7 +200,7 @@ ARDA_RESULT DrawSolid_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list,
 
 //////////////////////////////////////////////////////////////////////////////
 
-ARDA_RESULT LightWorld_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list,  // list to process
+ARDA_RESULT ARDA_LightWorld_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list,  // list to process
                                  CAM4DV1_PTR cam,     // camera position
                                  LIGHTV1_PTR lights,  // light list (might have more than one)
                                  int max_lights)      // maximum lights in list
@@ -958,33 +968,34 @@ else
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void Sort_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, int sort_method)
+ARDA_RESULT ARDA_Sort_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, int sort_method)
 {
-// this function sorts the rendering list based on the polygon z-values
-// the specific sorting method is controlled by sending in control flags
-// #define SORT_POLYLIST_AVGZ  0 - sorts on average of all vertices
-// #define SORT_POLYLIST_NEARZ 1 - sorts on closest z vertex of each poly
-// #define SORT_POLYLIST_FARZ  2 - sorts on farthest z vertex of each poly
+    // this function sorts the rendering list based on the polygon z-values
+    // the specific sorting method is controlled by sending in control flags
+    // #define SORT_POLYLIST_AVGZ  0 - sorts on average of all vertices
+    // #define SORT_POLYLIST_NEARZ 1 - sorts on closest z vertex of each poly
+    // #define SORT_POLYLIST_FARZ  2 - sorts on farthest z vertex of each poly
 
-switch(sort_method)
-      {
-      case SORT_POLYLIST_AVGZ:  //  - sorts on average of all vertices
-           {
-           qsort((void *)rend_list->poly_ptrs, rend_list->num_polys, sizeof(POLYF4DV1_PTR), Compare_AvgZ_POLYF4DV1);
-           } break;
+    switch(sort_method)
+          {
+          case SORT_POLYLIST_AVGZ:  //  - sorts on average of all vertices
+               {
+               qsort((void *)rend_list->poly_ptrs, rend_list->num_polys, sizeof(POLYF4DV1_PTR), Compare_AvgZ_POLYF4DV1);
+               } break;
 
-      case SORT_POLYLIST_NEARZ: // - sorts on closest z vertex of each poly
-           {
-           qsort((void *)rend_list->poly_ptrs, rend_list->num_polys, sizeof(POLYF4DV1_PTR), Compare_NearZ_POLYF4DV1);
-           } break;
+          case SORT_POLYLIST_NEARZ: // - sorts on closest z vertex of each poly
+               {
+               qsort((void *)rend_list->poly_ptrs, rend_list->num_polys, sizeof(POLYF4DV1_PTR), Compare_NearZ_POLYF4DV1);
+               } break;
 
-      case SORT_POLYLIST_FARZ:  //  - sorts on farthest z vertex of each poly
-           {
-           qsort((void *)rend_list->poly_ptrs, rend_list->num_polys, sizeof(POLYF4DV1_PTR), Compare_FarZ_POLYF4DV1);
-           } break;
+          case SORT_POLYLIST_FARZ:  //  - sorts on farthest z vertex of each poly
+               {
+               qsort((void *)rend_list->poly_ptrs, rend_list->num_polys, sizeof(POLYF4DV1_PTR), Compare_FarZ_POLYF4DV1);
+               } break;
 
-       default: break;
-       } // end switch
+           default: break;
+           } // end switch
+    return 0;
 
 } // end Sort_RENDERLIST4DV1
 

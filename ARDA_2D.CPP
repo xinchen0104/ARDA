@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <SDL2/SDL.h>
 #include "ARDA_CORE.H"
 #include "ARDA_MATH.H"
@@ -463,6 +461,7 @@ ARDA_RESULT ARDA_DrawClipLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1, SD
     if(ARDA_DrawLine(cxs, cys, cxe, cye, color, buffer, lpitch) != 0){
         return -1;
     }
+    SDL_Log("Draw line: (%i, %i) -> (%i, %i) color %x", x0, y0, x1, y1, color);
     return 0;
 
 }

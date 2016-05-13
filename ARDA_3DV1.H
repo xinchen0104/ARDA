@@ -10,10 +10,20 @@
 #define POLY4DV1_ATTR_TRANSPARENT         0x0002
 
 
+#define POLY4DV1_ATTR_SHADE_MODE_PURE       0x0020
+#define POLY4DV1_ATTR_SHADE_MODE_CONSTANT   0x0020 // (alias)
+#define POLY4DV1_ATTR_SHADE_MODE_FLAT       0x0040
+#define POLY4DV1_ATTR_SHADE_MODE_GOURAUD    0x0080
+#define POLY4DV1_ATTR_SHADE_MODE_PHONG      0x0100
+#define POLY4DV1_ATTR_SHADE_MODE_FASTPHONG  0x0100 // (alias)
+#define POLY4DV1_ATTR_SHADE_MODE_TEXTURE    0x0200
+
 // states of polygons and faces
 #define POLY4DV1_STATE_ACTIVE             0x0001
 #define POLY4DV1_STATE_CLIPPED            0x0002
 #define POLY4DV1_STATE_BACKFACE           0x0004
+
+
 
 // defines for objects version 1
 #define OBJECT4DV1_MAX_VERTICES           1024  // 64
